@@ -14,7 +14,7 @@ This covers:
 | Role | Software | Hostname | IP Address | Port | Description |
 | --- | --- | --- | --- | --- | --- |
 | http | nginx | nginxnode | 192.168.1.10 | 80 | the HTTP server/load balancer to respond to user requests, serve the front end, and balance traffic to each of the webapp/framework servers |
-| webapp | django<br>uwsgi | webappnode-1<br>webappnode-2<br>webappnode-3 | 192.168.1.21<br>192.168.1.22<br>192.168.1.23 | 8000 | the webapp/framework which conducts the logic dependent on the user's HTTP requests<br>the server which uses wsgi to connect the webapp to the HTTP server |
+| webapp | django<br><br>uwsgi | webappnode-1<br>webappnode-2<br>webappnode-3 | 192.168.1.21<br>192.168.1.22<br>192.168.1.23 | 8000 | the webapp/framework which conducts the logic dependent on the user's HTTP requests<br><br>the server which uses wsgi to connect the webapp to the HTTP server |
 | database | PostgreSQL | postgresqlnode | 192.168.1.30 | 5432 | the database to store all the data passed from the users |
 
 ## Virtual Machines
