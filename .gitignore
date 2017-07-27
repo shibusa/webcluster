@@ -1,0 +1,7 @@
+.vagrant
+.DS_Store
+chefdownloads.sh
+VBoxGuestAdditions_*
+git-*
+ruby-*
+Python-*
