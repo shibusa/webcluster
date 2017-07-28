@@ -7,6 +7,7 @@ This covers:
 - Installing required software dependent on host's role (nginx, postgresql, uwsgi/django)
 - Configuring software and services
 - Starting all services for the app to be up and running
+- Redeploying with project updates
 
 ## Cluster Design
 ![Design Diagram](./webcluster.png)
@@ -27,7 +28,7 @@ This covers:
 - [Virtualbox](https://www.virtualbox.org/)
 
 ## Setup
-**__Currently only viable on 192.168.1.0/24 network with the listed IPs above unused__**
+**__Currently only viable on 192.168.1.0/24 network with the IPs listed above unused__**
 1. Download requirements.
 2. Change directory to the same one housing 'Vagrantfile.'
 3. Adjust Vagrantfile so the interface of each of the VMs are accessible as per this [doc](https://www.vagrantup.com/docs/networking/public_network.html).
@@ -39,22 +40,22 @@ vagrant up
 6. Visit 192.168.1.10 in web browser of choice to see a fully deployed [ghquery](https://github.com/shibusa/ghquery).
 
 ### Accessing VMs
-1. Use `<vagrant status>` to view node names and status
+1. Use `vagrant status` to view node names and status
 ```
 Documents/webcluster [master●] » vagrant status
 Current machine states:
 
-postgresqlnode            not created (virtualbox)
-webappnode-1              not created (virtualbox)
-webappnode-2              not created (virtualbox)
-webappnode-3              not created (virtualbox)
-nginxnode                 not created (virtualbox)
+postgresqlnode            running (virtualbox)
+webappnode-1              running (virtualbox)
+webappnode-2              running (virtualbox)
+webappnode-3              running (virtualbox)
+nginxnode                 running (virtualbox)
 
 This environment represents multiple VMs. The VMs are all listed
 above with their current state. For more information about a specific
 VM, run `vagrant status NAME`.
 ```
-2. Use `<vagrant ssh {nodename}>` to log into the physical machine.
+2. Use `vagrant ssh {nodename}` to log into the physical machine.
 ```
 Documents/webcluster » vagrant ssh postgresqlnode
 [vagrant@postgresql ~]$
