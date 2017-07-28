@@ -38,6 +38,11 @@ This covers:
 vagrant up
 ```
 6. Visit 192.168.1.10 in web browser of choice to see a fully deployed [ghquery](https://github.com/shibusa/ghquery).
+7. Login with
+```
+account: admin
+password: password
+```
 
 ### Accessing VMs
 1. Use `vagrant status` to view node names and status

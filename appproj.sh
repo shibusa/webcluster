@@ -47,6 +47,7 @@ source ${projectname}env/bin/activate
 pip install -r $projectname/requirements.txt
 python $projectname/manage.py makemigrations
 python $projectname/manage.py migrate
+python $projectname/manage.py loaddata init.json
 deactivate
 NEWSHELL
 
