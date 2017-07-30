@@ -18,6 +18,11 @@ This covers:
 | webapp | django<br><br>uwsgi | webappnode-1<br>webappnode-2<br>webappnode-3 | 192.168.1.21<br>192.168.1.22<br>192.168.1.23 | 8000 | the webapp/framework which conducts the logic dependent on the user's HTTP requests<br><br>the server which uses wsgi to connect the webapp to the HTTP server |
 | database | PostgreSQL | postgresqlnode | 192.168.1.30 | 5432 | the database to store all the data passed from the users |
 
+## Other Notes
+- Git is used to pull the full project repo originally for the nginxnode and webappnodes.  Git sparsecheckout was implemented to minimize request to only the necessary files, reducing data download size on each host.
+- Base ghquery project does not include HTTPS as the django's built in http server is not meant for production use.  HTTPS is implemented on nginx with HTTP redirect to enforce HTTPS usage.
+- fail_timeout implemented on nginx to ensure unresponsive webnodes to be excluded from rotation for new connections within a set time range.
+
 ## Virtual Machines
 - 1 nginx load balancer
 - 3 uwsgi servers with django
@@ -73,14 +78,12 @@ Documents/webcluster » vagrant ssh postgresqlnode
   ```
 ## Discovered Limitations
 - [nginx high availability](https://www.nginx.com/products/feature-matrix/) is not available in the open source version.  This can potentially be bypassed with a separate, dedicated networking load balancer and multiple nginx hosts.  Alternatively mutliple nginx hosts behind a source NAT.
-- Virtualbox isn't supported by [vagrant up --parallel](https://www.vagrantup.com/docs/cli/up.html#no-parallel).  This means provisioning happens sequentially.  Potential work around is breaking cluster into separate vagrantfiles and then using a separate wrapper to multithread them.  Theoretically, other [providers](https://www.vagrantup.com/docs/providers/) are more capable, a non-wrapper method is possible with Vagrant being installed along with it.
+- Virtualbox isn't supported by [vagrant up --parallel](https://www.vagrantup.com/docs/virtualbox/usage.html).  This means provisioning happens sequentially.  Potential work around is using a separate wrapper to check node names via vagrant status, then starting nodes up in a multithreaded manner.  Other [providers](https://www.vagrantup.com/docs/providers/) are more capable, a non-wrapper method is possible with Vagrant being installed along with it.
 
 ## To Do List
-- Implement sparsecheckout to simplify clone requests to nodes.
-- Clean up django configurations to ensure it's production ready.
-- Figure out how to properly implement https across web stack.
-- Secure the database and the connection between the uwsgi nodes and the database itself.
-- Redundant database.
-- Potentially implement a repo cache to minimize calls to the internet for software/dependencies.
-- Figure out a way where static IP addressing is unnecessary.
-- Determine if SELINUX is a must.  Potentially infrastructure dependent. I.E. Proper firewalls/ACLs/VLANs.
+- [ ] Secure the database and the connection between the uwsgi nodes and the database itself.
+- [ ] Redundant database.
+- [ ] Potentially implement a repo cache to minimize calls to the internet for software/dependencies/github clone.
+- [ ] Figure out a way where static IP addressing is unnecessary.
+- [ ] Determine if SELINUX is a must.  Potentially infrastructure dependent. I.E. Proper firewalls/ACLs/VLANs.
+- [ ] Convert BASH scripts to Python for readability/coding simplicity

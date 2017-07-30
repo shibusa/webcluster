@@ -28,18 +28,31 @@ fi
 # run as vagrant user
 sudo su - vagrant << NEWSHELL
 
-if [ -d $syshome/$projectname ]; then
-  # webapp already exists, upgrade it
-  echo -e "${GREEN}Updating $github${NC}"
-  cd $syshome/$projectname
+# create virtualenv if it doesnt exist
+if [ ! -d $syshome/${projectname}env ]; then
+  echo -e "${GREEN}Creating virtualenv${NC}"
+  virtualenv ${projectname}env
+fi
+
+# webapp doesn't exist
+if [ ! -d $syshome/$projectname ]; then
+  mkdir $projectname
+  cd $projectname
+  git init
+  git remote add -f origin $github
+  git config core.sparseCheckout true
+  # project.ini, main project folder, manage.py, pip dependency will always be part of deploy
+  echo -e "$projectname.ini\n/$projectname/\nmanage.py\nrequirements.txt" >> .git/info/sparse-checkout
+  # additional files/folders to be pulled
+  echo -e "/githubquery/\n/loginadmin/\n">> .git/info/sparse-checkout
+  echo -e "${GREEN}Pulling webapp${NC}"
   git pull origin master
   cd ../
 else
-  # webapp doesn't exist
-  echo -e "${GREEN}Cloning $github${NC}"
-  git clone $github
-  echo -e "${GREEN}Creating virtualenv${NC}"
-  virtualenv ${projectname}env
+  cd $projectname
+  echo -e "${GREEN}Updating webapp${NC}"
+  git pull origin master
+  cd ../
 fi
 
 # install pip requirements and migrate tables/ensure pip requirements up to date
@@ -48,6 +61,8 @@ pip install -r $projectname/requirements.txt
 python $projectname/manage.py makemigrations
 python $projectname/manage.py migrate
 python $projectname/manage.py loaddata init.json
+sudo sed -i -e 's|SESSION_COOKIE_SECURE = False|SESSION_COOKIE_SECURE = True|g' $projectname/$projectname/settings.py
+sudo sed -i -e 's|CSRF_COOKIE_SECURE = False|CSRF_COOKIE_SECURE = True|g' $projectname/$projectname/settings.py
 deactivate
 NEWSHELL
 
