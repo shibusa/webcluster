@@ -16,31 +16,31 @@ privkey="/etc/ssl/private/$projectname-key.pem"
 csr="/etc/ssl/csr/$projectname-csr.pem"
 selfsignedcert="/etc/ssl/certs/$projectname-cert.pem"
 
-if [ ! -d /etc/ssl/private ]; then
-  mkdir /etc/ssl/private
-fi
-
-if [ ! -d /etc/ssl/csr ]; then
-  mkdir /etc/ssl/csr
-fi
+# Folders that need to be made
+FOLDER_ARR=(/etc/ssl/private /etc/ssl/csr /etc/nginx/sites-available /etc/nginx/sites-enabled)
+for dir in ${FOLDER_ARR[@]}; do
+  if [ ! -d $dir ]; then
+    sudo mkdir $dir
+  fi
+done
 
 if [ ! -f $privkey ]; then
-  openssl genrsa -out $privkey 2048
-  chmod 400 $privkey
-  chown nginx:nginx $privkey
+  sudo openssl genrsa -out $privkey 2048
+  sudo chmod 400 $privkey
+  sudo chown nginx:nginx $privkey
 fi
 if [ ! -f $csr ]; then
   # do not generate blank csrs, this is for testing purposes
-  openssl req -new -sha256 -key $privkey -out $csr -subj "/C=US/ST=California/L=San Francisco/O=shibusa=OU=ghquery/email=shirfeng.chang@gmail.com"
+  sudo openssl req -new -sha256 -key $privkey -out $csr -subj "/C=US/ST=California/L=San Francisco/O=shibusa=OU=ghquery/emailAddress=shirfeng.chang@gmail.com"
 fi
 if [ ! -f $selfsignedcert ]; then
-  openssl x509 -req -in $csr -signkey $privkey -out $selfsignedcert
+  sudo openssl x509 -req -in $csr -signkey $privkey -out $selfsignedcert
 fi
 
-# Replacing nginx.conf
-echo "${GREEN}Creating updated /etc/nginx/nginx.conf${NC}"
+# Updating nginx.conf
+echo "${GREEN}Updating /etc/nginx/nginx.conf${NC}"
 sudo rm /etc/nginx/nginx.conf
-sudo cat << 'NEWCONF' > /etc/nginx/nginx.conf
+sudo cat << 'CONFUPDATE' > /etc/nginx/nginx.conf
 user  nginx;
 worker_processes  1;
 
@@ -70,40 +70,57 @@ http {
 
     #gzip  on;
 
-    upstream django {
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
+}
+CONFUPDATE
+
+#Remove default conf
+if [ -f /etc/nginx/conf.d/default.conf ]; then
+  sudo rm /etc/nginx/conf.d/default.conf
+fi
+
+#Create
+sudo rm /etc/nginx/sites-available/$projectname
+sudo cat << 'GHCONF' > /etc/nginx/sites-available/$projectname
+upstream django {
       least_conn;
       server 192.168.1.21:8000 max_fails=1 fail_timeout=15m;
       server 192.168.1.22:8000 max_fails=1 fail_timeout=15m;
       server 192.168.1.23:8000 max_fails=1 fail_timeout=15m;
-    }
-
-    server {
-      listen [::]:80;
-      listen 80;
-      return 301 https://192.168.1.10;
-    }
-
-    server {
-      listen [::]:443 ssl http2;
-      listen 443 ssl http2;
-
-      ssl_certificate /etc/ssl/certs/ghquery-cert.pem;
-      ssl_certificate_key /etc/ssl/private/ghquery-key.pem;
-      server_name 192.168.1.10;
-      charset     utf-8;
-
-
-      location /static {
-        root /home/vagrant;
-      }
-
-      location / {
-        include uwsgi_params;
-        uwsgi_pass django;
-      }
-    }
 }
-NEWCONF
+
+server {
+  listen [::]:80;
+  listen 80;
+  return 301 https://$host;
+}
+
+server {
+  listen [::]:443 ssl http2;
+  listen 443 ssl http2;
+
+  ssl_certificate /etc/ssl/certs/ghquery-cert.pem;
+  ssl_certificate_key /etc/ssl/private/ghquery-key.pem;
+  server_name $host;
+  charset     utf-8;
+
+
+  location /static {
+    root /home/vagrant;
+  }
+
+  location / {
+    include uwsgi_params;
+    uwsgi_pass django;
+  }
+}
+GHCONF
+
+# symbolic link to sites-enabled
+if [ ! -f etc/nginx/sites-enabled/$projectname ]; then
+  sudo ln -s /etc/nginx/sites-available/$projectname /etc/nginx/sites-enabled/$projectname
+fi
 
 # git clone project (assuming collectstatic in repo) to vagrant home, move static folder to vagrant base directory, replace if already existing
 sudo su - vagrant << NEWSHELL
